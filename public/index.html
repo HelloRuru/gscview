@@ -440,7 +440,7 @@ tr:hover td {
       <option value="90">LAST 90 DAYS</option>
     </select>
     <button class="btn-refresh" onclick="loadData()">&#9735; REFRESH</button>
-    <button class="btn-ai" onclick="runDiagnosis()">&#9670; AI DIAGNOSIS</button>
+    <button class="btn-refresh" onclick="exportData()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT JSON</button>
   </div>
 
   <!-- 總覽 -->
@@ -507,11 +507,6 @@ tr:hover td {
     </table>
   </div>
 
-  <!-- AI 診斷 -->
-  <div class="ai-panel" id="aiPanel" style="display:none;">
-    <div class="ai-title">&#9670; AI DIAGNOSIS</div>
-    <div class="ai-content" id="aiContent"></div>
-  </div>
 </div>
 
 <script>
@@ -561,6 +556,7 @@ async function loadData() {
   try {
     const data = await api(`/gsc?days=${days}`);
     if (!data) return;
+    _lastData = data;
 
     // 總覽
     document.getElementById('totalImpressions').textContent = formatNum(data.totals.impressions);
@@ -602,21 +598,15 @@ async function loadData() {
   document.getElementById('loading').classList.add('hidden');
 }
 
-async function runDiagnosis() {
-  const panel = document.getElementById('aiPanel');
-  const content = document.getElementById('aiContent');
-  panel.style.display = 'block';
-  content.innerHTML = '<span class="ai-loading">ANALYZING DATA...</span>';
-
-  const days = document.getElementById('dateRange').value;
-  try {
-    const data = await api(`/ai-diagnosis?days=${days}`);
-    if (data) {
-      content.textContent = data.diagnosis;
-    }
-  } catch {
-    content.textContent = 'DIAGNOSIS FAILED // RETRY LATER';
-  }
+// 匯出 JSON 讓小八在本地分析
+let _lastData = null;
+async function exportData() {
+  if (!_lastData) { alert('請先 REFRESH 載入數據'); return; }
+  const blob = new Blob([JSON.stringify(_lastData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gsc-${_lastData.period.start}_${_lastData.period.end}.json`;
+  a.click();
 }
 
 // 初始載入
