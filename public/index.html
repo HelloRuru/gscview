@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSC View // Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cyan: #0ff;
+  --magenta: #ff3366;
+  --purple: #a855f7;
+  --green: #22c55e;
+  --yellow: #fbbf24;
+  --bg: #0a0a0f;
+  --surface: rgba(10, 10, 20, 0.85);
+  --border: rgba(0, 255, 255, 0.15);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--cyan);
+  overflow-x: hidden;
+}
+
+/* 背景格線 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,255,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* 掃描線 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* 頂部導覽 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-logo {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 3px;
+  text-shadow: 0 0 15px rgba(0,255,255,0.4);
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 11px;
+  color: rgba(0,255,255,0.5);
+}
+
+.topbar-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid rgba(255,51,102,0.3);
+  color: var(--magenta);
+  padding: 6px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+}
+
+.btn-logout:hover {
+  border-color: var(--magenta);
+  box-shadow: 0 0 15px rgba(255,51,102,0.2);
+}
+
+/* 主要內容 */
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* 日期選擇器 */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.controls select, .controls button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--cyan);
+  padding: 10px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.controls select:hover, .controls button:hover {
+  border-color: rgba(0,255,255,0.4);
+  box-shadow: 0 0 10px rgba(0,255,255,0.1);
+}
+
+.controls select option {
+  background: #0a0a0f;
+}
+
+.btn-refresh {
+  background: rgba(0,255,255,0.05) !important;
+  letter-spacing: 2px;
+}
+
+.btn-ai {
+  border-color: rgba(168,85,247,0.3) !important;
+  color: var(--purple) !important;
+  letter-spacing: 2px;
+}
+
+.btn-ai:hover {
+  border-color: var(--purple) !important;
+  box-shadow: 0 0 15px rgba(168,85,247,0.2) !important;
+}
+
+/* 總覽卡片 */
+.overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+}
+
+.stat-card:nth-child(1)::before { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+.stat-card:nth-child(2)::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
+.stat-card:nth-child(3)::before { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+.stat-card:nth-child(4)::before { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
+
+.stat-label {
+  font-size: 10px;
+  color: rgba(0,255,255,0.4);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: 'Orbitron', monospace;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.stat-card:nth-child(1) .stat-value { color: var(--cyan); text-shadow: 0 0 15px rgba(0,255,255,0.3); }
+.stat-card:nth-child(2) .stat-value { color: var(--green); text-shadow: 0 0 15px rgba(34,197,94,0.3); }
+.stat-card:nth-child(3) .stat-value { color: var(--yellow); text-shadow: 0 0 15px rgba(251,191,36,0.3); }
+.stat-card:nth-child(4) .stat-value { color: var(--purple); text-shadow: 0 0 15px rgba(168,85,247,0.3); }
+
+.stat-change {
+  font-size: 11px;
+  margin-top: 6px;
+  color: rgba(0,255,255,0.3);
+}
+
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--magenta); }
+
+/* 站點比較表 */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.panel-header .tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border: 1px solid rgba(0,255,255,0.2);
+  color: rgba(0,255,255,0.5);
+  font-weight: 400;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 12px 24px;
+  font-size: 10px;
+  color: rgba(0,255,255,0.4);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0,255,255,0.08);
+}
+
+td {
+  padding: 14px 24px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(0,255,255,0.05);
+}
+
+tr:hover td {
+  background: rgba(0,255,255,0.02);
+}
+
+.site-name {
+  color: var(--cyan);
+}
+
+.site-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-name a:hover {
+  text-decoration: underline;
+  text-shadow: 0 0 10px rgba(0,255,255,0.3);
+}
+
+.num { font-family: 'Orbitron', monospace; font-size: 14px; }
+.num-cyan { color: var(--cyan); }
+.num-green { color: var(--green); }
+.num-yellow { color: var(--yellow); }
+.num-purple { color: var(--purple); }
+
+/* 關鍵字表 */
+.keyword-rank {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-family: 'Orbitron', monospace;
+}
+
+.rank-good { background: rgba(34,197,94,0.15); color: var(--green); }
+.rank-mid { background: rgba(251,191,36,0.15); color: var(--yellow); }
+.rank-bad { background: rgba(255,51,102,0.15); color: var(--magenta); }
+
+/* AI 診斷面板 */
+.ai-panel {
+  background: var(--surface);
+  border: 1px solid rgba(168,85,247,0.2);
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.ai-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--purple), transparent);
+}
+
+.ai-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  color: var(--purple);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.ai-content {
+  font-size: 13px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.7);
+  white-space: pre-wrap;
+}
+
+.ai-loading {
+  color: rgba(168,85,247,0.5);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* 載入中 */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-text {
+  font-family: 'Orbitron', monospace;
+  font-size: 16px;
+  letter-spacing: 4px;
+  animation: blink 1.5s infinite;
+}
+
+.loading-bar {
+  width: 200px;
+  height: 2px;
+  background: rgba(0,255,255,0.1);
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.loading-bar-inner {
+  height: 100%;
+  width: 30%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  animation: loadBar 1.5s ease-in-out infinite;
+}
+
+@keyframes loadBar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* 響應式 */
+@media (max-width: 768px) {
+  .overview { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: 16px; }
+  .topbar { padding: 12px 16px; }
+  th, td { padding: 10px 12px; font-size: 11px; }
+  .stat-value { font-size: 24px; }
+}
+
+@media (max-width: 480px) {
+  .overview { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="loading-text">INITIALIZING</div>
+  <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+</div>
+
+<div class="topbar">
+  <div class="topbar-logo">GSC VIEW</div>
+  <div class="topbar-status">
+    <span class="dot"></span>
+    <span id="statusText">CONNECTED</span>
+    <span id="lastUpdate"></span>
+    <button class="btn-logout" onclick="logout()">LOGOUT</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="controls">
+    <select id="dateRange">
+      <option value="7">LAST 7 DAYS</option>
+      <option value="14">LAST 14 DAYS</option>
+      <option value="28" selected>LAST 28 DAYS</option>
+      <option value="90">LAST 90 DAYS</option>
+    </select>
+    <button class="btn-refresh" onclick="loadData()">&#9735; REFRESH</button>
+    <button class="btn-ai" onclick="runDiagnosis()">&#9670; AI DIAGNOSIS</button>
+  </div>
+
+  <!-- 總覽 -->
+  <div class="overview">
+    <div class="stat-card">
+      <div class="stat-label">Total Impressions</div>
+      <div class="stat-value" id="totalImpressions">--</div>
+      <div class="stat-change" id="impressionsChange"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Clicks</div>
+      <div class="stat-value" id="totalClicks">--</div>
+      <div class="stat-change" id="clicksChange"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Average CTR</div>
+      <div class="stat-value" id="avgCtr">--</div>
+      <div class="stat-change" id="ctrChange"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Average Position</div>
+      <div class="stat-value" id="avgPosition">--</div>
+      <div class="stat-change" id="positionChange"></div>
+    </div>
+  </div>
+
+  <!-- 站點比較 -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>SITE COMPARISON</span>
+      <span class="tag">6 DOMAINS</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Impressions</th>
+          <th>Clicks</th>
+          <th>CTR</th>
+          <th>Avg Position</th>
+        </tr>
+      </thead>
+      <tbody id="siteTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Top 關鍵字 -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>TOP QUERIES</span>
+      <span class="tag">ALL SITES</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Keyword</th>
+          <th>Site</th>
+          <th>Impressions</th>
+          <th>Clicks</th>
+          <th>Position</th>
+        </tr>
+      </thead>
+      <tbody id="keywordTable"></tbody>
+    </table>
+  </div>
+
+  <!-- AI 診斷 -->
+  <div class="ai-panel" id="aiPanel" style="display:none;">
+    <div class="ai-title">&#9670; AI DIAGNOSIS</div>
+    <div class="ai-content" id="aiContent"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+const token = localStorage.getItem('gsc_token');
+
+if (!token) window.location.href = '/login.html';
+
+function logout() {
+  localStorage.removeItem('gsc_token');
+  window.location.href = '/login.html';
+}
+
+async function api(path, body = null) {
+  const opts = {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  };
+  if (body) {
+    opts.method = 'POST';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) {
+    logout();
+    return null;
+  }
+  return res.json();
+}
+
+function formatNum(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function rankClass(pos) {
+  if (pos <= 10) return 'rank-good';
+  if (pos <= 30) return 'rank-mid';
+  return 'rank-bad';
+}
+
+async function loadData() {
+  const days = document.getElementById('dateRange').value;
+
+  try {
+    const data = await api(`/gsc?days=${days}`);
+    if (!data) return;
+
+    // 總覽
+    document.getElementById('totalImpressions').textContent = formatNum(data.totals.impressions);
+    document.getElementById('totalClicks').textContent = formatNum(data.totals.clicks);
+    document.getElementById('avgCtr').textContent = data.totals.ctr.toFixed(1) + '%';
+    document.getElementById('avgPosition').textContent = data.totals.position.toFixed(1);
+
+    // 站點比較表
+    const siteHtml = data.sites.map(s => `
+      <tr>
+        <td class="site-name"><a href="https://${s.domain}" target="_blank">${s.domain}</a></td>
+        <td class="num num-cyan">${formatNum(s.impressions)}</td>
+        <td class="num num-green">${formatNum(s.clicks)}</td>
+        <td class="num num-yellow">${s.ctr.toFixed(1)}%</td>
+        <td class="num num-purple">${s.position.toFixed(1)}</td>
+      </tr>
+    `).join('');
+    document.getElementById('siteTable').innerHTML = siteHtml;
+
+    // Top 關鍵字
+    const kwHtml = data.topQueries.map(q => `
+      <tr>
+        <td>${q.query}</td>
+        <td class="site-name">${q.site}</td>
+        <td class="num num-cyan">${q.impressions}</td>
+        <td class="num num-green">${q.clicks}</td>
+        <td><span class="keyword-rank ${rankClass(q.position)}">${q.position.toFixed(1)}</span></td>
+      </tr>
+    `).join('');
+    document.getElementById('keywordTable').innerHTML = kwHtml;
+
+    document.getElementById('lastUpdate').textContent =
+      'UPDATED ' + new Date().toLocaleTimeString('en-GB');
+
+  } catch (err) {
+    console.error(err);
+  }
+
+  document.getElementById('loading').classList.add('hidden');
+}
+
+async function runDiagnosis() {
+  const panel = document.getElementById('aiPanel');
+  const content = document.getElementById('aiContent');
+  panel.style.display = 'block';
+  content.innerHTML = '<span class="ai-loading">ANALYZING DATA...</span>';
+
+  const days = document.getElementById('dateRange').value;
+  try {
+    const data = await api(`/ai-diagnosis?days=${days}`);
+    if (data) {
+      content.textContent = data.diagnosis;
+    }
+  } catch {
+    content.textContent = 'DIAGNOSIS FAILED // RETRY LATER';
+  }
+}
+
+// 初始載入
+loadData();
+</script>
+</body>
+</html>
