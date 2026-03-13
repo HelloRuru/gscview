@@ -1,0 +1,7 @@
+name = "gscview-cron"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+[triggers]
+crons = ["0 1 * * 1"]
+# UTC 01:00 每週一 = 台灣時間 09:00 每週一
