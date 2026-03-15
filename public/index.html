@@ -400,6 +400,45 @@ tr:hover td {
   100% { transform: translateX(400%); }
 }
 
+/* Health check */
+.health-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px 24px; }
+.health-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 20px; }
+.health-domain { font-size: 13px; color: var(--cyan); margin-bottom: 8px; }
+.health-score { font-family: 'Orbitron', monospace; font-size: 36px; font-weight: 700; margin-bottom: 4px; }
+.score-good { color: var(--green); text-shadow: 0 0 15px rgba(34,197,94,0.3); }
+.score-mid { color: var(--yellow); text-shadow: 0 0 15px rgba(251,191,36,0.3); }
+.score-bad { color: var(--magenta); text-shadow: 0 0 15px rgba(255,51,102,0.3); }
+.health-status { font-size: 11px; color: rgba(0,255,255,0.5); margin-bottom: 12px; }
+.health-checks { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.check-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.check-dot[title] { cursor: help; }
+.check-ok { background: var(--green); box-shadow: 0 0 4px var(--green); }
+.check-fail { background: var(--magenta); box-shadow: 0 0 4px var(--magenta); }
+.check-warn { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); }
+.suggestion { font-size: 11px; padding: 2px 0; }
+.suggestion.error { color: var(--magenta); }
+.suggestion.warning { color: var(--yellow); }
+.suggestion.info { color: rgba(0,255,255,0.4); }
+.health-controls { padding: 16px 24px; display: flex; gap: 12px; }
+.health-controls button { background: var(--surface); border: 1px solid var(--border); color: var(--cyan); padding: 10px 16px; font-family: 'Share Tech Mono', monospace; font-size: 13px; cursor: pointer; letter-spacing: 2px; transition: all 0.3s; }
+.health-controls button:hover { border-color: rgba(0,255,255,0.4); box-shadow: 0 0 10px rgba(0,255,255,0.1); }
+.scanning-msg { padding: 24px; text-align: center; color: rgba(0,255,255,0.5); animation: blink 1.5s infinite; }
+
+/* Index check */
+.index-controls { padding: 16px 24px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.index-controls select, .index-controls button { background: var(--surface); border: 1px solid var(--border); color: var(--cyan); padding: 10px 16px; font-family: 'Share Tech Mono', monospace; font-size: 13px; cursor: pointer; letter-spacing: 1px; transition: all 0.3s; }
+.index-controls select option { background: #0a0a0f; }
+.index-controls select:hover, .index-controls button:hover { border-color: rgba(0,255,255,0.4); box-shadow: 0 0 10px rgba(0,255,255,0.1); }
+#urlSelector { max-height: 300px; overflow-y: auto; padding: 0 24px 16px; }
+#urlSelector label { display: block; padding: 4px 0; font-size: 12px; color: rgba(0,255,255,0.7); cursor: pointer; }
+#urlSelector label:hover { color: var(--cyan); }
+#manualInput textarea { width: calc(100% - 48px); margin: 0 24px 16px; min-height: 80px; background: rgba(0,255,255,0.03); border: 1px solid var(--border); color: var(--cyan); font-family: 'Share Tech Mono', monospace; font-size: 12px; padding: 12px; resize: vertical; outline: none; }
+#manualInput textarea:focus { border-color: rgba(0,255,255,0.4); }
+.verdict-pass { color: var(--green); font-weight: 700; }
+.verdict-neutral { color: var(--yellow); font-weight: 700; }
+.verdict-fail { color: var(--magenta); font-weight: 700; }
+.verdict-unknown { color: rgba(0,255,255,0.3); }
+
 /* 響應式 */
 @media (max-width: 768px) {
   .overview { grid-template-columns: repeat(2, 1fr); }
@@ -407,6 +446,7 @@ tr:hover td {
   .topbar { padding: 12px 16px; }
   th, td { padding: 10px 12px; font-size: 11px; }
   .stat-value { font-size: 24px; }
+  .health-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
@@ -441,6 +481,8 @@ tr:hover td {
     </select>
     <button class="btn-refresh" onclick="loadData()">&#9735; REFRESH</button>
     <button class="btn-refresh" onclick="exportData()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT JSON</button>
+    <button class="btn-refresh" onclick="runHealthCheck()" style="border-color:rgba(251,191,36,0.3);color:var(--yellow);">&#9889; HEALTH SCAN</button>
+    <button class="btn-refresh" onclick="toggleIndexPanel()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">&#9673; INDEX CHECK</button>
   </div>
 
   <!-- 總覽 -->
@@ -505,6 +547,56 @@ tr:hover td {
       </thead>
       <tbody id="keywordTable"></tbody>
     </table>
+  </div>
+
+  <!-- 健康檢查 -->
+  <div class="panel" id="healthPanel" style="display:none;">
+    <div class="panel-header">
+      <span>SITE HEALTH</span>
+      <span class="tag">DIAGNOSTICS</span>
+    </div>
+    <div id="healthContent">
+      <div class="scanning-msg">Click HEALTH SCAN to start diagnostics</div>
+    </div>
+  </div>
+
+  <!-- 索引狀態 -->
+  <div class="panel" id="indexPanel" style="display:none;">
+    <div class="panel-header">
+      <span>INDEX STATUS</span>
+      <span class="tag" id="indexCount">URL INSPECTION</span>
+    </div>
+    <div class="index-controls">
+      <select id="indexSiteSelect">
+        <option value="sc-domain:blog.helloruru.com">blog.helloruru.com</option>
+        <option value="sc-domain:ohruru.com">ohruru.com</option>
+        <option value="sc-domain:tools.helloruru.com">tools.helloruru.com</option>
+        <option value="sc-domain:lab.helloruru.com">lab.helloruru.com</option>
+        <option value="sc-domain:kaorutsai.com">kaorutsai.com</option>
+        <option value="sc-domain:helloruru.com">helloruru.com</option>
+      </select>
+      <button onclick="loadSitemapUrls()">LOAD SITEMAP</button>
+      <button onclick="toggleManualInput()">MANUAL INPUT</button>
+      <button onclick="runInspection()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">INSPECT</button>
+    </div>
+    <div id="urlSelector" style="display:none;"></div>
+    <div id="manualInput" style="display:none;">
+      <textarea id="manualUrls" placeholder="One URL per line..."></textarea>
+    </div>
+    <div id="indexResults" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Verdict</th>
+            <th>Coverage</th>
+            <th>Crawled As</th>
+            <th>Last Crawl</th>
+          </tr>
+        </thead>
+        <tbody id="indexTable"></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -607,6 +699,152 @@ async function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = `gsc-${_lastData.period.start}_${_lastData.period.end}.json`;
   a.click();
+}
+
+// === Health Check ===
+async function runHealthCheck() {
+  const panel = document.getElementById('healthPanel');
+  const content = document.getElementById('healthContent');
+  panel.style.display = '';
+  content.innerHTML = '<div class="scanning-msg">SCANNING 6 DOMAINS...</div>';
+  panel.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    const data = await api('/health');
+    if (!data || !data.results) {
+      content.innerHTML = '<div class="scanning-msg" style="color:var(--magenta);">SCAN FAILED</div>';
+      return;
+    }
+
+    const cards = data.results.map(site => {
+      const scoreClass = site.score >= 80 ? 'score-good' : site.score >= 60 ? 'score-mid' : 'score-bad';
+      const checks = site.checks || {};
+      const dots = Object.entries(checks).map(([key, val]) => {
+        const cls = val.ok ? 'check-ok' : 'check-fail';
+        return `<span class="check-dot ${cls}" title="${key}: ${val.ok ? 'OK' : 'FAIL'}"></span>`;
+      }).join('');
+
+      const suggestions = (site.suggestions || []).map(s =>
+        `<div class="suggestion ${s.severity}">${s.severity === 'error' ? '&#10007;' : s.severity === 'warning' ? '&#9888;' : '&#8226;'} ${s.message}</div>`
+      ).join('');
+
+      const httpInfo = checks.httpStatus ? `HTTP ${checks.httpStatus.value}` : '?';
+      const timeInfo = checks.responseTime ? `${checks.responseTime.value}ms` : '?';
+
+      return `
+        <div class="health-card">
+          <div class="health-domain">${site.domain}</div>
+          <div class="health-score ${scoreClass}">${site.score}</div>
+          <div class="health-status">${httpInfo} / ${timeInfo}</div>
+          <div class="health-checks">${dots}</div>
+          ${suggestions || '<div class="suggestion" style="color:var(--green);">&#10003; All checks passed</div>'}
+        </div>
+      `;
+    }).join('');
+
+    content.innerHTML = `<div class="health-grid">${cards}</div>`;
+  } catch (err) {
+    content.innerHTML = `<div class="scanning-msg" style="color:var(--magenta);">ERROR: ${err.message}</div>`;
+  }
+}
+
+// === Index Check ===
+function toggleIndexPanel() {
+  const panel = document.getElementById('indexPanel');
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+  if (panel.style.display !== 'none') panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleManualInput() {
+  const el = document.getElementById('manualInput');
+  const sel = document.getElementById('urlSelector');
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+  if (el.style.display !== 'none') sel.style.display = 'none';
+}
+
+async function loadSitemapUrls() {
+  const siteVal = document.getElementById('indexSiteSelect').value;
+  const domain = siteVal.replace('sc-domain:', '');
+  const sel = document.getElementById('urlSelector');
+  const manual = document.getElementById('manualInput');
+  manual.style.display = 'none';
+  sel.style.display = '';
+  sel.innerHTML = '<div class="scanning-msg">Loading sitemap...</div>';
+
+  try {
+    const data = await api(`/sitemap-urls?site=${domain}`);
+    if (!data || !data.urls || data.urls.length === 0) {
+      sel.innerHTML = '<div style="padding:12px 0;color:var(--yellow);font-size:12px;">No URLs found in sitemap. Try MANUAL INPUT.</div>';
+      return;
+    }
+
+    const checkboxes = data.urls.slice(0, 50).map((url, i) =>
+      `<label><input type="checkbox" name="sitemapUrl" value="${url}" ${i < 10 ? 'checked' : ''}> ${url.replace(/^https?:\/\/[^/]+/, '')}</label>`
+    ).join('');
+
+    sel.innerHTML = `<div style="padding:0 0 8px;font-size:11px;color:rgba(0,255,255,0.4);">${data.count} URLs found (showing first 50, max 20 selected)</div>${checkboxes}`;
+  } catch (err) {
+    sel.innerHTML = `<div style="padding:12px 0;color:var(--magenta);font-size:12px;">Error: ${err.message}</div>`;
+  }
+}
+
+async function runInspection() {
+  const siteVal = document.getElementById('indexSiteSelect').value;
+  let urls = [];
+
+  // Check manual input first
+  const manualEl = document.getElementById('manualInput');
+  if (manualEl.style.display !== 'none') {
+    const text = document.getElementById('manualUrls').value.trim();
+    urls = text.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+  } else {
+    // Get checked sitemap URLs
+    const checked = document.querySelectorAll('input[name="sitemapUrl"]:checked');
+    urls = Array.from(checked).map(c => c.value);
+  }
+
+  if (urls.length === 0) {
+    alert('No URLs selected. Load sitemap or use manual input.');
+    return;
+  }
+
+  urls = urls.slice(0, 20);
+  const resultsDiv = document.getElementById('indexResults');
+  const tbody = document.getElementById('indexTable');
+  resultsDiv.style.display = '';
+  tbody.innerHTML = `<tr><td colspan="5" class="scanning-msg">INSPECTING ${urls.length} URLs...</td></tr>`;
+  document.getElementById('indexCount').textContent = `${urls.length} URLS`;
+
+  try {
+    const data = await api('/inspect', { urls, siteUrl: siteVal });
+    if (!data) return;
+
+    const rows = (data.results || []).map(r => {
+      const vClass = r.verdict === 'PASS' ? 'verdict-pass'
+        : r.verdict === 'NEUTRAL' ? 'verdict-neutral'
+        : r.verdict === 'FAIL' ? 'verdict-fail'
+        : 'verdict-unknown';
+      const shortUrl = r.url.replace(/^https?:\/\/[^/]+/, '');
+      const crawlDate = r.lastCrawlTime ? new Date(r.lastCrawlTime).toLocaleDateString('en-GB') : '--';
+      return `
+        <tr>
+          <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;" title="${r.url}">${shortUrl}</td>
+          <td class="${vClass}">${r.verdict}</td>
+          <td style="font-size:11px;">${r.coverageState || '--'}</td>
+          <td>${r.crawledAs || '--'}</td>
+          <td>${crawlDate}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const errorRows = (data.errors || []).map(e => `
+      <tr><td title="${e.url}">${e.url.replace(/^https?:\/\/[^/]+/, '')}</td><td class="verdict-fail" colspan="4">${e.error}</td></tr>
+    `).join('');
+
+    tbody.innerHTML = rows + errorRows || '<tr><td colspan="5">No results</td></tr>';
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--magenta);">Error: ${err.message}</td></tr>`;
+  }
 }
 
 // 初始載入
