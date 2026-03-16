@@ -482,7 +482,7 @@ tr:hover td {
       <option value="90">LAST 90 DAYS</option>
     </select>
     <button class="btn-refresh" onclick="loadData()">&#9735; REFRESH</button>
-    <button class="btn-refresh" onclick="exportData()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT JSON</button>
+    <button class="btn-refresh" onclick="exportHealthReport()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT REPORT</button>
     <button class="btn-refresh" onclick="runHealthCheck()" style="border-color:rgba(251,191,36,0.3);color:var(--yellow);">&#9889; HEALTH SCAN</button>
     <button class="btn-refresh" onclick="toggleIndexPanel()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">&#9673; INDEX CHECK</button>
   </div>
@@ -697,14 +697,60 @@ async function loadData() {
   document.getElementById('loading').classList.add('hidden');
 }
 
-// 匯出 JSON 讓小八在本地分析
+// 匯出健康檢查報告
 let _lastData = null;
-async function exportData() {
-  if (!_lastData) { alert('請先 REFRESH 載入數據'); return; }
-  const blob = new Blob([JSON.stringify(_lastData, null, 2)], { type: 'application/json' });
+let _lastHealthData = null;
+
+async function exportHealthReport() {
+  if (!_lastHealthData) {
+    // 還沒跑過 health scan，先跑一次
+    await runHealthCheck();
+  }
+  if (!_lastHealthData) {
+    alert('健康檢查失敗，無法匯出報告');
+    return;
+  }
+
+  const now = new Date().toISOString().split('T')[0];
+  let md = `# GSC View Health Report\n`;
+  md += `> Generated: ${now}\n\n`;
+
+  // Summary
+  if (_lastHealthData.summary) {
+    md += `## Overall Assessment\n\n${_lastHealthData.summary}\n\n`;
+  }
+
+  // Per site
+  for (const site of _lastHealthData.results) {
+    const icon = site.score >= 80 ? 'OK' : site.score >= 60 ? 'WARN' : 'BAD';
+    md += `---\n\n## ${site.domain} — ${site.score} (${icon})\n\n`;
+
+    // Checks summary
+    const checks = site.checks || {};
+    if (checks.httpStatus) md += `- HTTP: ${checks.httpStatus.value}\n`;
+    if (checks.responseTime) md += `- Response: ${checks.responseTime.value}ms\n`;
+    if (checks.metaTitle) md += `- Title: ${checks.metaTitle.value || '(none)'} (${checks.metaTitle.length} chars)\n`;
+    if (checks.metaDescription) md += `- Description: ${checks.metaDescription.length} chars\n`;
+    md += `\n`;
+
+    // Suggestions
+    if (site.suggestions && site.suggestions.length > 0) {
+      md += `### Need to fix\n\n`;
+      for (const s of site.suggestions) {
+        const marker = s.severity === 'error' ? '[!!]' : s.severity === 'warning' ? '[!]' : '[i]';
+        md += `${marker} ${s.message}\n\n`;
+      }
+    } else {
+      md += `All checks passed.\n\n`;
+    }
+  }
+
+  md += `---\n\n*Report from GSC View (gscview.kaorutsai.com)*\n`;
+
+  const blob = new Blob([md], { type: 'text/markdown' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `gsc-${_lastData.period.start}_${_lastData.period.end}.json`;
+  a.download = `health-report-${now}.md`;
   a.click();
 }
 
@@ -722,6 +768,8 @@ async function runHealthCheck() {
       content.innerHTML = '<div class="scanning-msg" style="color:var(--magenta);">SCAN FAILED</div>';
       return;
     }
+
+    _lastHealthData = data;
 
     const cards = data.results.map(site => {
       const scoreClass = site.score >= 80 ? 'score-good' : site.score >= 60 ? 'score-mid' : 'score-bad';
