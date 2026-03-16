@@ -415,10 +415,12 @@ tr:hover td {
 .check-ok { background: var(--green); box-shadow: 0 0 4px var(--green); }
 .check-fail { background: var(--magenta); box-shadow: 0 0 4px var(--magenta); }
 .check-warn { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); }
-.suggestion { font-size: 11px; padding: 2px 0; }
+.suggestion { font-size: 14px; padding: 4px 0; line-height: 1.6; }
 .suggestion.error { color: var(--magenta); }
 .suggestion.warning { color: var(--yellow); }
 .suggestion.info { color: rgba(0,255,255,0.4); }
+.health-summary { padding: 20px 24px; border-top: 1px solid var(--border); font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.7); white-space: pre-wrap; }
+.health-summary-title { font-family: 'Orbitron', monospace; font-size: 12px; color: var(--cyan); letter-spacing: 2px; margin-bottom: 8px; }
 .health-controls { padding: 16px 24px; display: flex; gap: 12px; }
 .health-controls button { background: var(--surface); border: 1px solid var(--border); color: var(--cyan); padding: 10px 16px; font-family: 'Share Tech Mono', monospace; font-size: 13px; cursor: pointer; letter-spacing: 2px; transition: all 0.3s; }
 .health-controls button:hover { border-color: rgba(0,255,255,0.4); box-shadow: 0 0 10px rgba(0,255,255,0.1); }
@@ -742,7 +744,10 @@ async function runHealthCheck() {
       `;
     }).join('');
 
-    content.innerHTML = `<div class="health-grid">${cards}</div>`;
+    const summaryHtml = data.summary
+      ? `<div class="health-summary"><div class="health-summary-title">OVERALL ASSESSMENT</div>${data.summary}</div>`
+      : '';
+    content.innerHTML = `<div class="health-grid">${cards}</div>${summaryHtml}`;
   } catch (err) {
     content.innerHTML = `<div class="scanning-msg" style="color:var(--magenta);">ERROR: ${err.message}</div>`;
   }
