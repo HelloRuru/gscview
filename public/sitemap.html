@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSC View // Sitemap Manager</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cyan: #0ff;
+  --magenta: #ff3366;
+  --purple: #a855f7;
+  --green: #22c55e;
+  --yellow: #fbbf24;
+  --bg: #0a0a0f;
+  --surface: rgba(10, 10, 20, 0.85);
+  --border: rgba(0, 255, 255, 0.15);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--cyan);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,255,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 24px; }
+
+.topbar-logo {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 3px;
+  text-shadow: 0 0 15px rgba(0,255,255,0.4);
+  text-decoration: none;
+  color: var(--cyan);
+}
+
+.topbar-nav { display: flex; gap: 4px; }
+.topbar-nav a {
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  color: rgba(0,255,255,0.4);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+.topbar-nav a:hover { color: var(--cyan); border-color: var(--border); }
+.topbar-nav a.active { color: var(--cyan); border-color: rgba(0,255,255,0.3); background: rgba(0,255,255,0.05); }
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 11px;
+  color: rgba(0,255,255,0.5);
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid rgba(255,51,102,0.3);
+  color: var(--magenta);
+  padding: 6px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+}
+.btn-logout:hover { border-color: var(--magenta); box-shadow: 0 0 15px rgba(255,51,102,0.2); }
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.page-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0,255,255,0.3);
+}
+
+.page-desc {
+  font-size: 13px;
+  color: rgba(0,255,255,0.4);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+/* 提交區 */
+.submit-panel {
+  background: var(--surface);
+  border: 1px solid rgba(168,85,247,0.2);
+  padding: 24px;
+  margin-bottom: 32px;
+  position: relative;
+}
+.submit-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--purple), transparent);
+}
+.submit-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  color: var(--purple);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+.submit-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.submit-row select, .submit-row input, .submit-row button {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  color: var(--cyan);
+  padding: 10px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+.submit-row select option { background: #0a0a0f; }
+.submit-row input { flex: 1; min-width: 300px; outline: none; }
+.submit-row input:focus { border-color: rgba(0,255,255,0.4); box-shadow: 0 0 10px rgba(0,255,255,0.1); }
+.submit-row input::placeholder { color: rgba(0,255,255,0.2); }
+.submit-row button {
+  cursor: pointer;
+  letter-spacing: 2px;
+  border-color: rgba(168,85,247,0.3);
+  color: var(--purple);
+}
+.submit-row button:hover {
+  border-color: var(--purple);
+  box-shadow: 0 0 15px rgba(168,85,247,0.2);
+}
+.submit-msg {
+  margin-top: 12px;
+  font-size: 12px;
+  min-height: 18px;
+}
+
+/* 收錄總覽 */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 20px;
+  text-align: center;
+}
+.summary-label {
+  font-size: 10px;
+  color: rgba(0,255,255,0.4);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.summary-value {
+  font-family: 'Orbitron', monospace;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* Sitemap 清單 */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.panel-header .tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border: 1px solid rgba(0,255,255,0.2);
+  color: rgba(0,255,255,0.5);
+  font-weight: 400;
+}
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  padding: 12px 24px;
+  font-size: 10px;
+  color: rgba(0,255,255,0.4);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0,255,255,0.08);
+}
+td {
+  padding: 14px 24px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(0,255,255,0.05);
+}
+tr:hover td { background: rgba(0,255,255,0.02); }
+
+.num { font-family: 'Orbitron', monospace; font-size: 14px; }
+.num-cyan { color: var(--cyan); }
+.num-green { color: var(--green); }
+.num-yellow { color: var(--yellow); }
+.num-purple { color: var(--purple); }
+.num-magenta { color: var(--magenta); }
+
+/* 收錄率條 */
+.index-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.index-bar { width: 80px; height: 6px; background: rgba(0,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.index-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.rate-high .index-bar-fill { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.rate-mid .index-bar-fill { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.rate-low .index-bar-fill { background: var(--magenta); box-shadow: 0 0 6px var(--magenta); }
+
+.status-ok { color: var(--green); }
+.status-pending { color: var(--yellow); }
+.status-error { color: var(--magenta); }
+
+.scanning-msg { padding: 24px; text-align: center; color: rgba(0,255,255,0.5); animation: blink 1.5s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.site-group-header {
+  padding: 12px 24px;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--purple);
+  background: rgba(168,85,247,0.05);
+  border-bottom: 1px solid rgba(168,85,247,0.1);
+}
+
+.empty-msg { padding: 40px; text-align: center; color: rgba(0,255,255,0.3); font-size: 13px; }
+
+@media (max-width: 768px) {
+  .main { padding: 16px; }
+  .topbar { padding: 12px 16px; }
+  .topbar-left { gap: 12px; }
+  .topbar-logo { font-size: 16px; }
+  .summary-grid { grid-template-columns: 1fr; }
+  th, td { padding: 10px 12px; font-size: 11px; }
+  .submit-row input { min-width: 200px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="topbar-logo">GSC VIEW</a>
+    <nav class="topbar-nav">
+      <a href="/">DASHBOARD</a>
+      <a href="/sitemap.html" class="active">SITEMAP</a>
+    </nav>
+  </div>
+  <div class="topbar-status">
+    <button class="btn-logout" onclick="logout()">LOGOUT</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">SITEMAP MANAGER</div>
+  <div class="page-desc">提交 Sitemap 給 Google、查看各站收錄狀態。</div>
+
+  <!-- 提交區 -->
+  <div class="submit-panel">
+    <div class="submit-title">SUBMIT SITEMAP</div>
+    <div class="submit-row">
+      <select id="submitSite">
+        <option value="sc-domain:blog.helloruru.com">blog.helloruru.com</option>
+        <option value="sc-domain:ohruru.com">ohruru.com</option>
+        <option value="sc-domain:tools.helloruru.com">tools.helloruru.com</option>
+        <option value="sc-domain:lab.helloruru.com">lab.helloruru.com</option>
+        <option value="sc-domain:kaorutsai.com">kaorutsai.com</option>
+        <option value="sc-domain:helloruru.com">helloruru.com</option>
+      </select>
+      <input type="text" id="sitemapUrl" placeholder="https://blog.helloruru.com/sitemap.xml">
+      <button onclick="submitSitemap()">SUBMIT</button>
+    </div>
+    <div class="submit-msg" id="submitMsg"></div>
+  </div>
+
+  <!-- 收錄總覽 -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-label">Total Sitemaps</div>
+      <div class="summary-value num-cyan" id="totalSitemaps">--</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Total Submitted</div>
+      <div class="summary-value num-green" id="totalSubmitted">--</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Total Indexed</div>
+      <div class="summary-value num-purple" id="totalIndexed">--</div>
+    </div>
+  </div>
+
+  <!-- Sitemap 清單 -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>SITEMAP STATUS</span>
+      <span class="tag" id="smCount">LOADING</span>
+    </div>
+    <div id="smContent">
+      <div class="scanning-msg">LOADING SITEMAPS...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+const token = localStorage.getItem('gsc_token');
+if (!token) window.location.href = '/login.html';
+
+function logout() {
+  localStorage.removeItem('gsc_token');
+  window.location.href = '/login.html';
+}
+
+async function api(path, body = null) {
+  const opts = {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  };
+  if (body) {
+    opts.method = 'POST';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) { logout(); return null; }
+  return res.json();
+}
+
+function formatNum(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+async function loadSitemaps() {
+  try {
+    const data = await api('/sitemaps?site=all');
+    if (!data) return;
+
+    const sitemaps = data.sitemaps || [];
+
+    // 總覽數字
+    const totalSm = sitemaps.length;
+    const totalSub = sitemaps.reduce((s, m) => s + m.submitted, 0);
+    const totalIdx = sitemaps.reduce((s, m) => s + m.indexed, 0);
+
+    document.getElementById('totalSitemaps').textContent = totalSm;
+    document.getElementById('totalSubmitted').textContent = formatNum(totalSub);
+    document.getElementById('totalIndexed').textContent = formatNum(totalIdx);
+    document.getElementById('smCount').textContent = `${totalSm} SITEMAPS`;
+
+    if (sitemaps.length === 0) {
+      document.getElementById('smContent').innerHTML =
+        '<div class="empty-msg">No sitemaps found. Submit one above to get started.</div>';
+      return;
+    }
+
+    // 依 domain 分群
+    const grouped = {};
+    for (const sm of sitemaps) {
+      if (!grouped[sm.domain]) grouped[sm.domain] = [];
+      grouped[sm.domain].push(sm);
+    }
+
+    let html = '';
+    for (const [domain, items] of Object.entries(grouped)) {
+      html += `<div class="site-group-header">${domain}</div>`;
+      html += '<table><thead><tr><th>Sitemap URL</th><th>Submitted</th><th>Indexed</th><th>Index Rate</th><th>Status</th></tr></thead><tbody>';
+
+      for (const sm of items) {
+        const rate = sm.submitted > 0 ? (sm.indexed / sm.submitted) * 100 : 0;
+        const rateClass = rate >= 80 ? 'rate-high' : rate >= 50 ? 'rate-mid' : 'rate-low';
+        const statusClass = sm.errors > 0 ? 'status-error' : sm.isPending ? 'status-pending' : 'status-ok';
+        const statusText = sm.errors > 0 ? `${sm.errors} ERRORS` : sm.isPending ? 'PENDING' : 'OK';
+        const shortPath = sm.path.replace(/^https?:\/\/[^/]+/, '');
+
+        html += `
+          <tr>
+            <td title="${sm.path}">${shortPath}</td>
+            <td class="num num-cyan">${formatNum(sm.submitted)}</td>
+            <td class="num num-green">${formatNum(sm.indexed)}</td>
+            <td>
+              <div class="index-bar-wrap ${rateClass}">
+                <div class="index-bar"><div class="index-bar-fill" style="width:${rate}%;"></div></div>
+                <span class="num" style="font-size:12px;">${rate.toFixed(0)}%</span>
+              </div>
+            </td>
+            <td class="${statusClass}">${statusText}</td>
+          </tr>
+        `;
+      }
+      html += '</tbody></table>';
+    }
+
+    document.getElementById('smContent').innerHTML = html;
+
+  } catch (err) {
+    document.getElementById('smContent').innerHTML =
+      `<div class="scanning-msg" style="color:var(--magenta);">ERROR: ${err.message}</div>`;
+  }
+}
+
+async function submitSitemap() {
+  const siteUrl = document.getElementById('submitSite').value;
+  const sitemapUrl = document.getElementById('sitemapUrl').value.trim();
+  const msgEl = document.getElementById('submitMsg');
+
+  if (!sitemapUrl) {
+    msgEl.innerHTML = '<span style="color:var(--yellow);">Please enter a sitemap URL</span>';
+    return;
+  }
+
+  msgEl.innerHTML = '<span style="color:var(--cyan);animation:blink 1s infinite;">SUBMITTING...</span>';
+
+  try {
+    const result = await api('/sitemaps', { siteUrl, sitemapUrl });
+    if (!result) return;
+
+    if (result.ok) {
+      msgEl.innerHTML = '<span style="color:var(--green);">Sitemap submitted successfully. Reloading...</span>';
+      document.getElementById('sitemapUrl').value = '';
+      setTimeout(loadSitemaps, 1500);
+    } else {
+      msgEl.innerHTML = `<span style="color:var(--magenta);">Failed: ${result.error}</span>`;
+    }
+  } catch (err) {
+    msgEl.innerHTML = `<span style="color:var(--magenta);">Error: ${err.message}</span>`;
+  }
+}
+
+// 選站時自動帶入 sitemap URL
+document.getElementById('submitSite').addEventListener('change', function() {
+  const domain = this.value.replace('sc-domain:', '');
+  document.getElementById('sitemapUrl').placeholder = `https://${domain}/sitemap.xml`;
+});
+
+loadSitemaps();
+</script>
+</body>
+</html>

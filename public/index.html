@@ -503,7 +503,13 @@ tr:hover td {
 </div>
 
 <div class="topbar">
-  <div class="topbar-logo">GSC VIEW</div>
+  <div style="display:flex;align-items:center;gap:24px;">
+    <a href="/" class="topbar-logo" style="text-decoration:none;color:var(--cyan);">GSC VIEW</a>
+    <nav style="display:flex;gap:4px;">
+      <a href="/" style="font-size:11px;letter-spacing:2px;padding:6px 14px;color:var(--cyan);text-decoration:none;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.05);">DASHBOARD</a>
+      <a href="/sitemap.html" style="font-size:11px;letter-spacing:2px;padding:6px 14px;color:rgba(0,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all 0.3s;">SITEMAP</a>
+    </nav>
+  </div>
   <div class="topbar-status">
     <span class="dot"></span>
     <span id="statusText">CONNECTED</span>
