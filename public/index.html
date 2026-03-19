@@ -442,6 +442,42 @@ tr:hover td {
 .verdict-fail { color: var(--magenta); font-weight: 700; }
 .verdict-unknown { color: rgba(0,255,255,0.3); }
 
+/* Query Analysis */
+.analysis-controls { padding: 16px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.analysis-controls select, .analysis-controls button {
+  background: var(--surface); border: 1px solid var(--border); color: var(--cyan);
+  padding: 10px 16px; font-family: 'Share Tech Mono', monospace; font-size: 13px;
+  cursor: pointer; letter-spacing: 1px; transition: all 0.3s;
+}
+.analysis-controls select option { background: #0a0a0f; }
+.analysis-controls select:hover, .analysis-controls button:hover {
+  border-color: rgba(0,255,255,0.4); box-shadow: 0 0 10px rgba(0,255,255,0.1);
+}
+
+/* 長尾詞分佈柱狀圖 */
+.dist-chart { padding: 24px; display: flex; align-items: flex-end; gap: 12px; height: 220px; }
+.dist-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.dist-bar { width: 100%; min-height: 4px; border-radius: 2px 2px 0 0; transition: height 0.6s ease; position: relative; }
+.dist-bar-clicks { background: linear-gradient(180deg, var(--cyan), rgba(0,255,255,0.3)); box-shadow: 0 0 10px rgba(0,255,255,0.2); }
+.dist-bar-impressions { background: linear-gradient(180deg, var(--purple), rgba(168,85,247,0.3)); box-shadow: 0 0 10px rgba(168,85,247,0.2); }
+.dist-bar-label { font-size: 10px; color: rgba(0,255,255,0.5); letter-spacing: 1px; }
+.dist-bar-value { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--cyan); }
+.dist-bar-group { display: flex; gap: 4px; width: 100%; align-items: flex-end; flex: 1; }
+.dist-legend { display: flex; gap: 20px; padding: 0 24px 16px; font-size: 11px; color: rgba(0,255,255,0.5); }
+.dist-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.dist-legend .leg-clicks::before { background: var(--cyan); }
+.dist-legend .leg-impressions::before { background: var(--purple); }
+.dist-legend .leg-queries::before { background: var(--green); }
+.dist-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: rgba(0,255,255,0.05); }
+.dist-stat-cell { padding: 12px; text-align: center; background: var(--surface); }
+.dist-stat-cell .label { font-size: 9px; color: rgba(0,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.dist-stat-cell .value { font-family: 'Orbitron', monospace; font-size: 16px; }
+
+/* 熱門字標記 */
+.hot-rank { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--magenta); min-width: 24px; display: inline-block; }
+.hot-sites { font-size: 10px; color: rgba(0,255,255,0.3); }
+.ctr-bar { display: inline-block; height: 4px; border-radius: 2px; background: var(--green); vertical-align: middle; margin-left: 6px; }
+
 /* 響應式 */
 @media (max-width: 768px) {
   .overview { grid-template-columns: repeat(2, 1fr); }
@@ -450,6 +486,8 @@ tr:hover td {
   th, td { padding: 10px 12px; font-size: 11px; }
   .stat-value { font-size: 24px; }
   .health-grid { grid-template-columns: 1fr; }
+  .dist-stats { grid-template-columns: repeat(3, 1fr); }
+  .dist-chart { height: 160px; }
 }
 
 @media (max-width: 480px) {
@@ -486,6 +524,7 @@ tr:hover td {
     <button class="btn-refresh" onclick="exportHealthReport()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT REPORT</button>
     <button class="btn-refresh" onclick="runHealthCheck()" style="border-color:rgba(251,191,36,0.3);color:var(--yellow);">&#9889; HEALTH SCAN</button>
     <button class="btn-refresh" onclick="toggleIndexPanel()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">&#9673; INDEX CHECK</button>
+    <button class="btn-refresh" onclick="loadQueryAnalysis()" style="border-color:rgba(255,51,102,0.3);color:var(--magenta);">&#9733; QUERY ANALYSIS</button>
   </div>
 
   <!-- 總覽 -->
@@ -605,6 +644,57 @@ tr:hover td {
         <tbody id="indexTable"></tbody>
       </table>
     </div>
+  </div>
+
+  <!-- 查詢分析 -->
+  <div class="panel" id="analysisPanel" style="display:none;">
+    <div class="panel-header">
+      <span>QUERY ANALYSIS</span>
+      <span class="tag" id="analysisTag">ALL SITES</span>
+    </div>
+    <div class="analysis-controls">
+      <select id="analysisSite">
+        <option value="all">ALL SITES</option>
+        <option value="blog.helloruru.com">blog.helloruru.com</option>
+        <option value="ohruru.com">ohruru.com</option>
+        <option value="tools.helloruru.com">tools.helloruru.com</option>
+        <option value="lab.helloruru.com">lab.helloruru.com</option>
+        <option value="kaorutsai.com">kaorutsai.com</option>
+        <option value="helloruru.com">helloruru.com</option>
+      </select>
+      <button onclick="loadQueryAnalysis()">REFRESH</button>
+    </div>
+
+    <!-- 長尾詞分佈 -->
+    <div class="panel-header" style="border-top:1px solid var(--border);">
+      <span>LONG-TAIL DISTRIBUTION</span>
+      <span class="tag">BY WORD COUNT</span>
+    </div>
+    <div id="distChart" class="dist-chart"></div>
+    <div class="dist-legend">
+      <span class="leg-clicks">CLICKS</span>
+      <span class="leg-impressions">IMPRESSIONS</span>
+    </div>
+    <div id="distStats" class="dist-stats"></div>
+
+    <!-- 熱門字排行 -->
+    <div class="panel-header" style="border-top:1px solid var(--border);">
+      <span>HOT QUERIES</span>
+      <span class="tag" id="hotCount">TOP 30</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Query</th>
+          <th>Clicks</th>
+          <th>Impressions</th>
+          <th>CTR</th>
+          <th>Position</th>
+        </tr>
+      </thead>
+      <tbody id="hotTable"></tbody>
+    </table>
   </div>
 
 </div>
@@ -904,6 +994,88 @@ async function runInspection() {
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="5" style="color:var(--magenta);">Error: ${err.message}</td></tr>`;
   }
+}
+
+// === Query Analysis ===
+async function loadQueryAnalysis() {
+  const panel = document.getElementById('analysisPanel');
+  const days = document.getElementById('dateRange').value;
+  const site = document.getElementById('analysisSite').value;
+
+  panel.style.display = '';
+  panel.scrollIntoView({ behavior: 'smooth' });
+
+  document.getElementById('analysisTag').textContent = site === 'all' ? 'ALL SITES' : site.toUpperCase();
+  document.getElementById('distChart').innerHTML = '<div class="scanning-msg">ANALYZING QUERIES...</div>';
+  document.getElementById('distStats').innerHTML = '';
+  document.getElementById('hotTable').innerHTML = '';
+
+  try {
+    const data = await api(`/query-analysis?days=${days}&site=${site}`);
+    if (!data) return;
+
+    renderDistribution(data.distribution);
+    renderHotQueries(data.hotQueries);
+    document.getElementById('hotCount').textContent = `TOP ${data.hotQueries.length}`;
+  } catch (err) {
+    document.getElementById('distChart').innerHTML =
+      `<div class="scanning-msg" style="color:var(--magenta);">ERROR: ${err.message}</div>`;
+  }
+}
+
+function renderDistribution(dist) {
+  const maxClicks = Math.max(...dist.map(d => d.clicks), 1);
+  const maxImpr = Math.max(...dist.map(d => d.impressions), 1);
+
+  const labels = { '1': '1 字', '2': '2 字', '3': '3 字', '4': '4 字', '5+': '5+ 字' };
+
+  const chartHtml = dist.map(d => {
+    const clickH = Math.max((d.clicks / maxClicks) * 140, 4);
+    const imprH = Math.max((d.impressions / maxImpr) * 140, 4);
+    return `
+      <div class="dist-bar-wrap">
+        <div class="dist-bar-value">${formatNum(d.clicks)}</div>
+        <div class="dist-bar-group">
+          <div class="dist-bar dist-bar-clicks" style="height:${clickH}px;"></div>
+          <div class="dist-bar dist-bar-impressions" style="height:${imprH}px;"></div>
+        </div>
+        <div class="dist-bar-label">${labels[d.wordCount] || d.wordCount}</div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('distChart').innerHTML = chartHtml;
+
+  const statsHtml = dist.map(d => `
+    <div class="dist-stat-cell">
+      <div class="label">${labels[d.wordCount] || d.wordCount}</div>
+      <div class="value num-cyan">${d.queries}</div>
+      <div class="label" style="margin-top:4px;">${d.ctr.toFixed(1)}% CTR</div>
+    </div>
+  `).join('');
+  document.getElementById('distStats').innerHTML = statsHtml;
+}
+
+function renderHotQueries(queries) {
+  const maxClicks = Math.max(...queries.map(q => q.clicks), 1);
+
+  const html = queries.map((q, i) => {
+    const ctrWidth = Math.min(q.ctr * 2, 100);
+    const sitesStr = q.sites.length > 1
+      ? q.sites.map(s => s.split('.')[0]).join(', ')
+      : q.sites[0];
+    return `
+      <tr>
+        <td><span class="hot-rank">${String(i + 1).padStart(2, '0')}</span></td>
+        <td>${q.query} <span class="hot-sites">${sitesStr}</span></td>
+        <td class="num num-green">${formatNum(q.clicks)}</td>
+        <td class="num num-cyan">${formatNum(q.impressions)}</td>
+        <td class="num num-yellow">${q.ctr.toFixed(1)}%<span class="ctr-bar" style="width:${ctrWidth}px;"></span></td>
+        <td><span class="keyword-rank ${rankClass(q.position)}">${q.position.toFixed(1)}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('hotTable').innerHTML = html || '<tr><td colspan="6" style="color:rgba(0,255,255,0.3);">No query data yet</td></tr>';
 }
 
 // 初始載入
