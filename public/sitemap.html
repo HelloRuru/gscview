@@ -337,7 +337,7 @@ tr:hover td { background: rgba(0,255,255,0.02); }
         <option value="sc-domain:kaorutsai.com">kaorutsai.com</option>
         <option value="sc-domain:helloruru.com">helloruru.com</option>
       </select>
-      <input type="text" id="sitemapUrl" placeholder="https://blog.helloruru.com/sitemap.xml">
+      <input type="text" id="sitemapUrl" value="https://blog.helloruru.com/sitemap.xml">
       <button onclick="submitSitemap()">SUBMIT</button>
     </div>
     <div class="submit-msg" id="submitMsg"></div>
@@ -472,12 +472,23 @@ async function loadSitemaps() {
 
 async function submitSitemap() {
   const siteUrl = document.getElementById('submitSite').value;
-  const sitemapUrl = document.getElementById('sitemapUrl').value.trim();
+  const domain = siteUrl.replace('sc-domain:', '');
+  let sitemapUrl = document.getElementById('sitemapUrl').value.trim();
   const msgEl = document.getElementById('submitMsg');
 
   if (!sitemapUrl) {
-    msgEl.innerHTML = '<span style="color:var(--yellow);">Please enter a sitemap URL</span>';
-    return;
+    sitemapUrl = `https://${domain}/sitemap.xml`;
+    document.getElementById('sitemapUrl').value = sitemapUrl;
+  }
+
+  // 自動補全：相對路徑 → 完整網址
+  if (sitemapUrl.startsWith('/')) {
+    sitemapUrl = `https://${domain}${sitemapUrl}`;
+    document.getElementById('sitemapUrl').value = sitemapUrl;
+  }
+  if (!sitemapUrl.startsWith('http')) {
+    sitemapUrl = `https://${domain}/${sitemapUrl}`;
+    document.getElementById('sitemapUrl').value = sitemapUrl;
   }
 
   msgEl.innerHTML = '<span style="color:var(--cyan);animation:blink 1s infinite;">SUBMITTING...</span>';
@@ -501,7 +512,7 @@ async function submitSitemap() {
 // 選站時自動帶入 sitemap URL
 document.getElementById('submitSite').addEventListener('change', function() {
   const domain = this.value.replace('sc-domain:', '');
-  document.getElementById('sitemapUrl').placeholder = `https://${domain}/sitemap.xml`;
+  document.getElementById('sitemapUrl').value = `https://${domain}/sitemap.xml`;
 });
 
 loadSitemaps();
