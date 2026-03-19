@@ -435,7 +435,7 @@ async function loadSitemaps() {
     let html = '';
     for (const [domain, items] of Object.entries(grouped)) {
       html += `<div class="site-group-header">${domain}</div>`;
-      html += '<table><thead><tr><th>Sitemap URL</th><th>Submitted</th><th>Indexed</th><th>Index Rate</th><th>Status</th></tr></thead><tbody>';
+      html += '<table><thead><tr><th>Sitemap URL</th><th>Submitted</th><th>Indexed</th><th>Index Rate</th><th>Last Updated</th><th>Status</th></tr></thead><tbody>';
 
       for (const sm of items) {
         const rate = sm.submitted > 0 ? (sm.indexed / sm.submitted) * 100 : 0;
@@ -443,6 +443,13 @@ async function loadSitemaps() {
         const statusClass = sm.errors > 0 ? 'status-error' : sm.isPending ? 'status-pending' : 'status-ok';
         const statusText = sm.errors > 0 ? `${sm.errors} ERRORS` : sm.isPending ? 'PENDING' : 'OK';
         const shortPath = sm.path.replace(/^https?:\/\/[^/]+/, '');
+
+        const lastDate = sm.lastDownloaded
+          ? new Date(sm.lastDownloaded).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' })
+            + ' ' + new Date(sm.lastDownloaded).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+          : sm.lastSubmitted
+            ? new Date(sm.lastSubmitted).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' })
+            : '--';
 
         html += `
           <tr>
@@ -455,6 +462,7 @@ async function loadSitemaps() {
                 <span class="num" style="font-size:12px;">${rate.toFixed(0)}%</span>
               </div>
             </td>
+            <td style="font-size:12px;color:rgba(0,255,255,0.5);">${lastDate}</td>
             <td class="${statusClass}">${statusText}</td>
           </tr>
         `;
