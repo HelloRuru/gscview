@@ -535,11 +535,11 @@ tr:hover td {
       <option value="28" selected>LAST 28 DAYS</option>
       <option value="90">LAST 90 DAYS</option>
     </select>
-    <button class="btn-refresh" onclick="loadData()">&#9735; REFRESH</button>
-    <button class="btn-refresh" onclick="exportHealthReport()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT REPORT</button>
-    <button class="btn-refresh" onclick="runHealthCheck()" style="border-color:rgba(251,191,36,0.3);color:var(--yellow);">&#9889; HEALTH SCAN</button>
-    <button class="btn-refresh" onclick="toggleIndexPanel()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">&#9673; INDEX CHECK</button>
-    <button class="btn-refresh" onclick="loadQueryAnalysis()" style="border-color:rgba(255,51,102,0.3);color:var(--magenta);">&#9733; QUERY ANALYSIS</button>
+    <button class="btn-refresh" onclick="loadData()">&#9735; REFRESH 重新整理</button>
+    <button class="btn-refresh" onclick="exportHealthReport()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; EXPORT REPORT 匯出報告</button>
+    <button class="btn-refresh" onclick="runHealthCheck()" style="border-color:rgba(251,191,36,0.3);color:var(--yellow);">&#9889; HEALTH SCAN 健康掃描</button>
+    <button class="btn-refresh" onclick="toggleIndexPanel()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">&#9673; INDEX CHECK 收錄檢查</button>
+    <button class="btn-refresh" onclick="loadQueryAnalysis()" style="border-color:rgba(255,51,102,0.3);color:var(--magenta);">&#9733; QUERY ANALYSIS 搜尋分析</button>
   </div>
 
   <!-- 總覽 -->
@@ -620,7 +620,7 @@ tr:hover td {
   <!-- 索引狀態 -->
   <div class="panel" id="indexPanel" style="display:none;">
     <div class="panel-header">
-      <span>INDEX STATUS</span>
+      <span>INDEX STATUS 收錄狀態</span>
       <span class="tag" id="indexCount">URL INSPECTION</span>
     </div>
     <div style="padding:16px 24px 0;font-size:14px;line-height:1.8;color:rgba(255,255,255,0.6);">
@@ -649,11 +649,11 @@ tr:hover td {
       <table>
         <thead>
           <tr>
-            <th>URL</th>
-            <th>Verdict</th>
-            <th>Coverage</th>
-            <th>Crawled As</th>
-            <th>Last Crawl</th>
+            <th>URL 網址</th>
+            <th>Verdict 判定</th>
+            <th>Coverage 涵蓋範圍</th>
+            <th>Crawled As 爬取方式</th>
+            <th>Last Crawl 上次爬取</th>
           </tr>
         </thead>
         <tbody id="indexTable"></tbody>
@@ -664,7 +664,7 @@ tr:hover td {
   <!-- 查詢分析 -->
   <div class="panel" id="analysisPanel" style="display:none;">
     <div class="panel-header">
-      <span>QUERY ANALYSIS</span>
+      <span>QUERY ANALYSIS 搜尋分析</span>
       <span class="tag" id="analysisTag">ALL SITES</span>
     </div>
     <div class="analysis-controls">
@@ -682,7 +682,7 @@ tr:hover td {
 
     <!-- 長尾詞分佈 -->
     <div class="panel-header" style="border-top:1px solid var(--border);">
-      <span>LONG-TAIL DISTRIBUTION</span>
+      <span>LONG-TAIL DISTRIBUTION 長尾詞分佈</span>
       <span class="tag">BY WORD COUNT</span>
     </div>
     <div id="distChart" class="dist-chart"></div>
@@ -694,18 +694,18 @@ tr:hover td {
 
     <!-- 熱門字排行 -->
     <div class="panel-header" style="border-top:1px solid var(--border);">
-      <span>HOT QUERIES</span>
+      <span>HOT QUERIES 熱門搜尋字</span>
       <span class="tag" id="hotCount">TOP 30</span>
     </div>
     <table>
       <thead>
         <tr>
           <th>#</th>
-          <th>Query</th>
-          <th>Clicks</th>
-          <th>Impressions</th>
-          <th>CTR</th>
-          <th>Position</th>
+          <th>Query 搜尋字</th>
+          <th>Clicks 點擊</th>
+          <th>Impressions 曝光</th>
+          <th>CTR 點閱率</th>
+          <th>Position 排名</th>
         </tr>
       </thead>
       <tbody id="hotTable"></tbody>
@@ -968,7 +968,7 @@ async function runHealthCheck() {
     }).join('');
 
     const summaryHtml = data.summary
-      ? `<div class="health-summary"><div class="health-summary-title">OVERALL ASSESSMENT</div>${data.summary}</div>`
+      ? `<div class="health-summary"><div class="health-summary-title">OVERALL ASSESSMENT 整體評估</div>${data.summary}</div>`
       : '';
     content.innerHTML = `<div class="health-grid">${cards}</div>${summaryHtml}`;
   } catch (err) {
