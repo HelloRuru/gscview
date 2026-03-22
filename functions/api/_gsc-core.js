@@ -9,14 +9,15 @@ const SITES = [
   'sc-domain:helloruru.com',
 ];
 
-export async function getAccessToken(keyJson) {
+export async function getAccessToken(keyJson, extraScopes = []) {
   const key = JSON.parse(keyJson);
   const now = Math.floor(Date.now() / 1000);
 
+  const scopes = ['https://www.googleapis.com/auth/webmasters', ...extraScopes];
   const header = { alg: 'RS256', typ: 'JWT' };
   const payload = {
     iss: key.client_email,
-    scope: 'https://www.googleapis.com/auth/webmasters',
+    scope: scopes.join(' '),
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600,
