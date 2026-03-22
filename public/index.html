@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GSC View // Dashboard</title>
+<!-- v2.1.0 -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
@@ -515,6 +516,7 @@ tr:hover td {
     <nav style="display:flex;gap:4px;">
       <a href="/" style="font-size:11px;letter-spacing:2px;padding:6px 14px;color:var(--cyan);text-decoration:none;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.05);">DASHBOARD</a>
       <a href="/sitemap.html" style="font-size:11px;letter-spacing:2px;padding:6px 14px;color:rgba(0,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all 0.3s;">SITEMAP</a>
+      <a href="#" onclick="loadGA4Data();return false;" style="font-size:11px;letter-spacing:2px;padding:6px 14px;color:rgba(168,85,247,0.6);text-decoration:none;border:1px solid transparent;transition:all 0.3s;">GA4</a>
     </nav>
   </div>
   <div class="topbar-status">
@@ -538,7 +540,6 @@ tr:hover td {
     <button class="btn-refresh" onclick="runHealthCheck()" style="border-color:rgba(251,191,36,0.3);color:var(--yellow);">&#9889; HEALTH SCAN</button>
     <button class="btn-refresh" onclick="toggleIndexPanel()" style="border-color:rgba(34,197,94,0.3);color:var(--green);">&#9673; INDEX CHECK</button>
     <button class="btn-refresh" onclick="loadQueryAnalysis()" style="border-color:rgba(255,51,102,0.3);color:var(--magenta);">&#9733; QUERY ANALYSIS</button>
-    <button class="btn-refresh" onclick="loadGA4Data()" style="border-color:rgba(168,85,247,0.3);color:var(--purple);">&#9670; GA4 ANALYTICS</button>
   </div>
 
   <!-- 總覽 -->
@@ -716,6 +717,20 @@ tr:hover td {
     <div class="panel-header">
       <span>GA4 ANALYTICS</span>
       <span class="tag" id="gaTag">ALL SITES</span>
+    </div>
+    <div style="padding:16px 24px 0;font-size:14px;line-height:1.8;color:rgba(255,255,255,0.6);">
+      這裡看的是「有多少人來你的網站、待多久、看了幾頁」。<br><br>
+      <span style="color:var(--cyan);">Active Users</span> — 有多少不同的人來過（同一個人來 3 次只算 1 個）<br>
+      <span style="color:var(--green);">Sessions</span> — 總共被造訪幾次（同一個人來 3 次就算 3 次）<br>
+      <span style="color:var(--yellow);">Page Views</span> — 被看了幾個頁面（一個人看 5 頁就算 5）<br>
+      <span style="color:var(--purple);">Avg Duration</span> — 平均每次來停留多久（越久越好，代表內容有吸引力）<br>
+      <span style="color:rgba(255,255,255,0.7);">Bounce Rate</span> — 只看一頁就離開的比例（越低越好，低於 50% 算不錯）<br><br>
+      <span style="color:var(--magenta);">REALTIME</span> — 此刻正在你網站上的人，即時更新。<br><br>
+      <span style="color:var(--yellow);font-size:12px;">
+        &#9733; 小建議：Bounce Rate 超過 70% → 首頁可能不夠吸引人，試試加 CTA 或調整排版<br>
+        &#9733; 平均停留低於 30 秒 → 內容可能太短或不符合搜尋意圖<br>
+        &#9733; Page Views / Sessions 比值大於 2 → 很棒，訪客願意多看幾頁
+      </span>
     </div>
     <div class="ga-overview" id="gaOverview">
       <div class="stat-card">
